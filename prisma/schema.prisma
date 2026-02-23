@@ -1,0 +1,70 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ContractType {
+  CDI
+  CDD
+}
+
+model Contract {
+  id                       String      @id @default(cuid())
+  childName                String
+  startDate                DateTime
+  endDate                  DateTime?
+  contractType             ContractType
+  hoursPerDay              Float
+  daysPerWeek              Int
+  weeksPerYear             Int
+  plannedAbsences          Json
+  baseHourlyRate           Float
+  allowOverride            Boolean     @default(false)
+  overrideHourlyRate       Float?
+  billComplementaryHours   Boolean     @default(true)
+  overtimeRatePercent      Int
+  mealFeeEnabled           Boolean     @default(false)
+  mealFeePerMeal           Float       @default(0)
+  defaultMealsPerDay       Int         @default(1)
+  maintenanceFeeEnabled    Boolean     @default(false)
+  maintenanceFeeTiers      Json
+  applyPrecariousnessPrime Boolean     @default(false)
+  createdAt                DateTime    @default(now())
+  updatedAt                DateTime    @updatedAt
+
+  timeEntries TimeEntry[]
+}
+
+model TimeEntry {
+  id                String   @id @default(cuid())
+  contractId        String
+  date              DateTime
+  startTime         String?
+  endTime           String?
+  durationMinutes   Int
+  mealsCount        Int      @default(0)
+  isPlannedAbsence  Boolean  @default(false)
+  isUnplannedAbsence Boolean @default(false)
+  isHoliday         Boolean  @default(false)
+  isUnavailable     Boolean  @default(false)
+  notes             String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contract Contract @relation(fields: [contractId], references: [id], onDelete: Cascade)
+
+  @@unique([contractId, date])
+  @@index([contractId, date])
+}
+
+model Settings {
+  id                String @id @default("singleton")
+  netCoefficient    Float  @default(0.7812)
+  referenceGrid     Json
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+}

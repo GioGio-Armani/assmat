@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: assmat
+      POSTGRES_USER: assmat
+      POSTGRES_PASSWORD: assmat
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assmat -d assmat"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://assmat:assmat@db:5432/assmat?schema=public
+      ADMIN_TOKEN: change-me
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres_data:
