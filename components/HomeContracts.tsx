@@ -10,11 +10,14 @@ export function HomeContracts({ initialContracts }: { initialContracts: AppContr
   const [showCreate, setShowCreate] = useState(contracts.length === 0);
 
   return (
-    <div className="stack">
-      <div className="row" style={{ justifyContent: "space-between" }}>
-        <h1 style={{ margin: 0 }}>Contrats</h1>
+    <div className="stack mobile-screen">
+      <div className="mobile-hero">
+        <div>
+          <h1 style={{ margin: 0 }}>Contrats</h1>
+          <div className="muted small">Gestion mobile des contrats et du pointage.</div>
+        </div>
         <button className="btn primary" onClick={() => setShowCreate((s) => !s)}>
-          Nouveau contrat
+          {showCreate ? "Fermer" : "Nouveau"}
         </button>
       </div>
 
@@ -28,9 +31,9 @@ export function HomeContracts({ initialContracts }: { initialContracts: AppContr
         />
       ) : null}
 
-      <div className="contracts-list">
+      <div className="contracts-list mobile-contracts-list">
         {contracts.map((c) => (
-          <Link key={c.id} href={`/contracts/${c.id}`} className="contract-item">
+          <Link key={c.id} href={`/contracts/${c.id}`} className="contract-item mobile-contract-item">
             <div className="row" style={{ justifyContent: "space-between" }}>
               <strong>{c.childName}</strong>
               <span className="pill">{c.contractType}</span>

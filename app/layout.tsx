@@ -11,18 +11,18 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr">
       <body>
-        <div className="page">
-          <header className="header">
+        <div className="app-shell">
+          <header className="app-topbar">
             <Link href="/" className="brand">
               Assmat Contrats
             </Link>
-            <nav className="nav">
-              <Link href="/">Contrats</Link>
-              <Link href="/settings">Réglages</Link>
-              <Link href="/help" aria-label="Aide et mode d'emploi">❓ Aide</Link>
-            </nav>
           </header>
-          {children}
+          <main className="page">{children}</main>
+          <nav className="app-bottom-nav">
+            <Link href="/">Contrats</Link>
+            <Link href="/settings">Réglages</Link>
+            <Link href="/help" aria-label="Aide et mode d'emploi">Aide</Link>
+          </nav>
         </div>
       </body>
     </html>
