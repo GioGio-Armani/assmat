@@ -23,6 +23,7 @@ function defaultTiers(): MaintenanceFeeTier[] {
 }
 
 export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
+  const steps = ["Base", "Tarifs", "Indemnités"] as const;
   const parseLocaleNumber = (value: string) => Number(value.replace(",", "."));
   const parseLocaleNumberOrNull = (value: string) => {
     if (!value.trim()) return null;
@@ -38,6 +39,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState(0);
   const [plannedAbsenceDraft, setPlannedAbsenceDraft] = useState<PlannedAbsencePeriod>({ startDate: "", endDate: "" });
   const [form, setForm] = useState({
     childName: initial?.childName ?? "",
@@ -211,8 +213,22 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
         {success ? <span className="success small">{success}</span> : null}
       </div>
       {error ? <div className="error small">{error}</div> : null}
+      <div className="mobile-steps">
+        {steps.map((label, index) => (
+          <button
+            key={label}
+            type="button"
+            className="btn"
+            aria-pressed={step === index}
+            onClick={() => setStep(index)}
+          >
+            {index + 1}. {label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid cols-2">
-        <div className="stack">
+        <div className="stack" style={{ display: step === 0 ? "grid" : "none" }}>
           <div className="field">
             <label>Enfant</label>
             <input value={form.childName} onChange={(e) => setForm({ ...form, childName: e.target.value })} />
@@ -252,6 +268,9 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               <input type="text" inputMode="numeric" value={form.weeksPerYear} onChange={(e) => setForm({ ...form, weeksPerYear: e.target.value })} />
             </div>
           </div>
+        </div>
+
+        <div className="stack" style={{ display: step === 1 ? "grid" : "none" }}>
           <div className="row">
             <div className="field" style={{ flex: 1 }}>
               <label>Taux base (0 = auto via grille)</label>
@@ -290,7 +309,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           </div>
         </div>
 
-        <div className="stack">
+        <div className="stack" style={{ display: step === 2 ? "grid" : "none" }}>
           <label className="row"><input type="checkbox" checked={form.mealFeeEnabled} onChange={(e) => setForm({ ...form, mealFeeEnabled: e.target.checked })} /> Indemnité repas activée</label>
           <div className="row">
             <div className="field" style={{ flex: 1 }}>
@@ -443,7 +462,15 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           </div>
         </div>
       </div>
-      <div className="row">
+      <div className="row" style={{ justifyContent: "space-between" }}>
+        <button type="button" className="btn ghost" disabled={step === 0} onClick={() => setStep((s) => Math.max(0, s - 1))}>
+          Précédent
+        </button>
+        {step < steps.length - 1 ? (
+          <button type="button" className="btn" onClick={() => setStep((s) => Math.min(steps.length - 1, s + 1))}>
+            Suivant
+          </button>
+        ) : null}
         <button type="button" className="btn primary" onClick={submit} disabled={loading}>
           {loading ? "Enregistrement..." : mode === "create" ? "Créer le contrat" : "Enregistrer"}
         </button>
