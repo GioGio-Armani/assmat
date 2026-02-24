@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { contractInputSchema } from "@/lib/schemas";
 import type { AppContract, MaintenanceFeeTier, PlannedAbsencePeriod } from "@/lib/types";
 
@@ -24,8 +24,16 @@ function defaultTiers(): MaintenanceFeeTier[] {
 
 export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
   const parseLocaleNumber = (value: string) => Number(value.replace(",", "."));
+  const parseLocaleNumberOrNull = (value: string) => {
+    if (!value.trim()) return null;
+    const parsed = Number(value.replace(",", "."));
+    return Number.isFinite(parsed) ? parsed : null;
+  };
   const toInputValue = (value: number | string | null | undefined) =>
     value === null || value === undefined ? "" : String(value);
+  const formatHours = (value: number) => `${value.toFixed(2).replace(".", ",")} h`;
+  const formatCurrency = (value: number) =>
+    value.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -56,6 +64,68 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     applyPrecariousnessPrime:
       initial?.applyPrecariousnessPrime ?? ((initial?.contractType as string) === "CDD"),
   });
+
+  const monthlyPreview = useMemo(() => {
+    const hoursPerDay = parseLocaleNumberOrNull(form.hoursPerDay);
+    const weeksPerYear = parseLocaleNumberOrNull(form.weeksPerYear);
+    const baseHourlyRate = parseLocaleNumberOrNull(form.baseHourlyRate);
+    const overrideHourlyRate = parseLocaleNumberOrNull(form.overrideHourlyRate);
+
+    if (
+      hoursPerDay === null ||
+      weeksPerYear === null ||
+      baseHourlyRate === null ||
+      hoursPerDay <= 0 ||
+      weeksPerYear <= 0
+    ) {
+      return null;
+    }
+
+    const effectiveHourlyRate = form.allowOverride && overrideHourlyRate !== null
+      ? overrideHourlyRate
+      : baseHourlyRate;
+    const monthlyHours = (hoursPerDay * form.daysPerWeek * weeksPerYear) / 12;
+    const monthlyBaseSalary = monthlyHours * effectiveHourlyRate;
+    const monthlyContractDays = (form.daysPerWeek * weeksPerYear) / 12;
+
+    let maintenanceDailyFee = 0;
+    let monthlyMaintenanceFee = 0;
+    if (form.maintenanceFeeEnabled) {
+      const parsedTiers = form.maintenanceFeeTiers
+        .map((tier) => ({
+          minHours: parseLocaleNumberOrNull(tier.minHours),
+          maxHours: parseLocaleNumberOrNull(tier.maxHours),
+          fee: parseLocaleNumberOrNull(tier.fee),
+        }))
+        .filter(
+          (tier): tier is { minHours: number; maxHours: number; fee: number } =>
+            tier.minHours !== null && tier.maxHours !== null && tier.fee !== null,
+        );
+      const tier = parsedTiers.find((t) => hoursPerDay >= t.minHours && hoursPerDay < t.maxHours)
+        ?? parsedTiers.find((t) => hoursPerDay >= t.minHours && hoursPerDay <= t.maxHours);
+      maintenanceDailyFee = tier?.fee ?? 0;
+      monthlyMaintenanceFee = monthlyContractDays * maintenanceDailyFee;
+    }
+
+    return {
+      monthlyHours,
+      monthlyContractDays,
+      effectiveHourlyRate,
+      monthlyBaseSalary,
+      maintenanceDailyFee,
+      monthlyMaintenanceFee,
+      monthlyTotalWithMaintenance: monthlyBaseSalary + monthlyMaintenanceFee,
+    };
+  }, [
+    form.allowOverride,
+    form.baseHourlyRate,
+    form.daysPerWeek,
+    form.hoursPerDay,
+    form.maintenanceFeeEnabled,
+    form.maintenanceFeeTiers,
+    form.overrideHourlyRate,
+    form.weeksPerYear,
+  ]);
 
   async function submit() {
     setError(null);
@@ -175,6 +245,23 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           </div>
           <label className="row"><input type="checkbox" checked={form.billComplementaryHours} onChange={(e) => setForm({ ...form, billComplementaryHours: e.target.checked })} /> Facturer heures complémentaires</label>
           <label className="row"><input type="checkbox" checked={form.applyPrecariousnessPrime} onChange={(e) => setForm({ ...form, applyPrecariousnessPrime: e.target.checked })} /> Prime de précarité (CDD)</label>
+          <div className="card stack">
+            <strong>Simulation mensuelle en direct</strong>
+            {monthlyPreview ? (
+              <>
+                <div className="small muted">Hypothèse : présence chaque jour prévu au contrat.</div>
+                <div className="small">Heures mensuelles estimées : <strong>{formatHours(monthlyPreview.monthlyHours)}</strong></div>
+                <div className="small">Jours mensuels estimés : <strong>{monthlyPreview.monthlyContractDays.toFixed(2).replace(".", ",")} j</strong></div>
+                <div className="small">Taux horaire appliqué : <strong>{formatCurrency(monthlyPreview.effectiveHourlyRate)}</strong></div>
+                <div className="small">Salaire mensuel (hors indemnités) : <strong>{formatCurrency(monthlyPreview.monthlyBaseSalary)}</strong></div>
+                <div className="small">Entretien/jour : <strong>{formatCurrency(monthlyPreview.maintenanceDailyFee)}</strong></div>
+                <div className="small">Entretien mensuel estimé : <strong>{formatCurrency(monthlyPreview.monthlyMaintenanceFee)}</strong></div>
+                <div className="small">Total mensuel estimé (salaire + entretien) : <strong>{formatCurrency(monthlyPreview.monthlyTotalWithMaintenance)}</strong></div>
+              </>
+            ) : (
+              <div className="small muted">Renseignez les heures/jour, semaines/an et taux horaire pour afficher la simulation.</div>
+            )}
+          </div>
         </div>
 
         <div className="stack">
