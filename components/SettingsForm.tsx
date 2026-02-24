@@ -10,13 +10,26 @@ type Props = {
 };
 
 export function SettingsForm({ initialGrid, adminTokenConfigured }: Props) {
-  const [rows, setRows] = useState<ReferenceGridRow[]>(initialGrid);
+  const parseLocaleNumber = (value: string) => Number(value.replace(",", "."));
+  const [rows, setRows] = useState(
+    initialGrid.map((row) => ({
+      ...row,
+      hoursPerDay: String(row.hoursPerDay),
+      baseHourlyRate: String(row.baseHourlyRate),
+    })),
+  );
   const [msg, setMsg] = useState<string | null>(null);
 
   async function save() {
     setMsg(null);
     try {
-      const payload = settingsInputSchema.parse({ referenceGrid: rows });
+      const payload = settingsInputSchema.parse({
+        referenceGrid: rows.map((row) => ({
+          ...row,
+          hoursPerDay: parseLocaleNumber(row.hoursPerDay),
+          baseHourlyRate: parseLocaleNumber(row.baseHourlyRate),
+        })),
+      });
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -45,7 +58,7 @@ export function SettingsForm({ initialGrid, adminTokenConfigured }: Props) {
         <div className="row" style={{ justifyContent: "space-between" }}>
           <strong>Grille de référence (taux horaire)</strong>
           <div className="row">
-            <button className="btn" onClick={() => setRows((prev) => [...prev, { daysPerWeek: 4, hoursPerDay: 8.5, baseHourlyRate: 0 }])}>
+            <button className="btn" onClick={() => setRows((prev) => [...prev, { daysPerWeek: 4, hoursPerDay: "8.5", baseHourlyRate: "0" }])}>
               Ajouter ligne
             </button>
             <button className="btn primary" onClick={save}>Enregistrer</button>
@@ -80,24 +93,24 @@ export function SettingsForm({ initialGrid, adminTokenConfigured }: Props) {
                   </td>
                   <td>
                     <input
-                      type="number"
-                      step="0.25"
+                      type="text"
+                      inputMode="decimal"
                       value={r.hoursPerDay}
                       onChange={(e) => {
                         const next = [...rows];
-                        next[i] = { ...r, hoursPerDay: Number(e.target.value) };
+                        next[i] = { ...r, hoursPerDay: e.target.value };
                         setRows(next);
                       }}
                     />
                   </td>
                   <td>
                     <input
-                      type="number"
-                      step="0.01"
+                      type="text"
+                      inputMode="decimal"
                       value={r.baseHourlyRate}
                       onChange={(e) => {
                         const next = [...rows];
-                        next[i] = { ...r, baseHourlyRate: Number(e.target.value) };
+                        next[i] = { ...r, baseHourlyRate: e.target.value };
                         setRows(next);
                       }}
                     />

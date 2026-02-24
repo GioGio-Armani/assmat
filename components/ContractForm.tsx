@@ -23,6 +23,10 @@ function defaultTiers(): MaintenanceFeeTier[] {
 }
 
 export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
+  const parseLocaleNumber = (value: string) => Number(value.replace(",", "."));
+  const toInputValue = (value: number | string | null | undefined) =>
+    value === null || value === undefined ? "" : String(value);
+
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -31,20 +35,24 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     startDate: initial?.startDate ? new Date(initial.startDate).toISOString().slice(0, 10) : "",
     endDate: initial?.endDate ? new Date(initial.endDate).toISOString().slice(0, 10) : "",
     contractType: (initial?.contractType as "CDI" | "CDD") ?? "CDI",
-    hoursPerDay: initial?.hoursPerDay ?? 8.5,
+    hoursPerDay: toInputValue(initial?.hoursPerDay ?? 8.5),
     daysPerWeek: (initial?.daysPerWeek as 2 | 3 | 4 | 5) ?? 4,
-    weeksPerYear: initial?.weeksPerYear ?? 46,
+    weeksPerYear: toInputValue(initial?.weeksPerYear ?? 46),
     plannedAbsencesText: JSON.stringify(initial?.plannedAbsences ?? [], null, 2),
-    baseHourlyRate: initial?.baseHourlyRate ?? 0,
+    baseHourlyRate: toInputValue(initial?.baseHourlyRate ?? 0),
     allowOverride: initial?.allowOverride ?? false,
-    overrideHourlyRate: initial?.overrideHourlyRate ?? "",
+    overrideHourlyRate: toInputValue(initial?.overrideHourlyRate),
     billComplementaryHours: initial?.billComplementaryHours ?? true,
     overtimeRatePercent: (initial?.overtimeRatePercent as 10 | 15 | 25) ?? 10,
     mealFeeEnabled: initial?.mealFeeEnabled ?? false,
-    mealFeePerMeal: initial?.mealFeePerMeal ?? 0,
-    defaultMealsPerDay: initial?.defaultMealsPerDay ?? 1,
+    mealFeePerMeal: toInputValue(initial?.mealFeePerMeal ?? 0),
+    defaultMealsPerDay: toInputValue(initial?.defaultMealsPerDay ?? 1),
     maintenanceFeeEnabled: initial?.maintenanceFeeEnabled ?? false,
-    maintenanceFeeTiers: (initial?.maintenanceFeeTiers ?? defaultTiers()) as MaintenanceFeeTier[],
+    maintenanceFeeTiers: ((initial?.maintenanceFeeTiers ?? defaultTiers()) as MaintenanceFeeTier[]).map((tier) => ({
+      minHours: toInputValue(tier.minHours),
+      maxHours: toInputValue(tier.maxHours),
+      fee: toInputValue(tier.fee),
+    })),
     applyPrecariousnessPrime:
       initial?.applyPrecariousnessPrime ?? ((initial?.contractType as string) === "CDD"),
   });
@@ -60,21 +68,25 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
         startDate: form.startDate,
         endDate: form.endDate || null,
         contractType: form.contractType,
-        hoursPerDay: Number(form.hoursPerDay),
+        hoursPerDay: parseLocaleNumber(form.hoursPerDay),
         daysPerWeek: Number(form.daysPerWeek),
-        weeksPerYear: Number(form.weeksPerYear),
+        weeksPerYear: parseLocaleNumber(form.weeksPerYear),
         plannedAbsences,
-        baseHourlyRate: Number(form.baseHourlyRate),
+        baseHourlyRate: parseLocaleNumber(form.baseHourlyRate),
         allowOverride: form.allowOverride,
         overrideHourlyRate:
-          form.overrideHourlyRate === "" ? null : Number(form.overrideHourlyRate),
+          form.overrideHourlyRate === "" ? null : parseLocaleNumber(form.overrideHourlyRate),
         billComplementaryHours: form.billComplementaryHours,
         overtimeRatePercent: Number(form.overtimeRatePercent),
         mealFeeEnabled: form.mealFeeEnabled,
-        mealFeePerMeal: Number(form.mealFeePerMeal),
-        defaultMealsPerDay: Number(form.defaultMealsPerDay),
+        mealFeePerMeal: parseLocaleNumber(form.mealFeePerMeal),
+        defaultMealsPerDay: parseLocaleNumber(form.defaultMealsPerDay),
         maintenanceFeeEnabled: form.maintenanceFeeEnabled,
-        maintenanceFeeTiers: form.maintenanceFeeTiers,
+        maintenanceFeeTiers: form.maintenanceFeeTiers.map((tier) => ({
+          minHours: parseLocaleNumber(tier.minHours),
+          maxHours: parseLocaleNumber(tier.maxHours),
+          fee: parseLocaleNumber(tier.fee),
+        })),
         applyPrecariousnessPrime: form.applyPrecariousnessPrime,
       });
 
@@ -137,17 +149,17 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           <div className="row">
             <div className="field" style={{ flex: 1 }}>
               <label>Heures/jour</label>
-              <input type="number" step="0.25" value={form.hoursPerDay} onChange={(e) => setForm({ ...form, hoursPerDay: Number(e.target.value) })} />
+              <input type="text" inputMode="decimal" value={form.hoursPerDay} onChange={(e) => setForm({ ...form, hoursPerDay: e.target.value })} />
             </div>
             <div className="field" style={{ flex: 1 }}>
               <label>Semaines/an</label>
-              <input type="number" value={form.weeksPerYear} onChange={(e) => setForm({ ...form, weeksPerYear: Number(e.target.value) })} />
+              <input type="text" inputMode="numeric" value={form.weeksPerYear} onChange={(e) => setForm({ ...form, weeksPerYear: e.target.value })} />
             </div>
           </div>
           <div className="row">
             <div className="field" style={{ flex: 1 }}>
               <label>Taux base (0 = auto via grille)</label>
-              <input type="number" step="0.01" value={form.baseHourlyRate} onChange={(e) => setForm({ ...form, baseHourlyRate: Number(e.target.value) })} />
+              <input type="text" inputMode="decimal" value={form.baseHourlyRate} onChange={(e) => setForm({ ...form, baseHourlyRate: e.target.value })} />
             </div>
             <div className="field" style={{ flex: 1 }}>
               <label>Majoration %</label>
@@ -159,7 +171,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           <label className="row"><input type="checkbox" checked={form.allowOverride} onChange={(e) => setForm({ ...form, allowOverride: e.target.checked })} /> Override taux horaire</label>
           <div className="field">
             <label>Taux horaire override</label>
-            <input type="number" step="0.01" value={form.overrideHourlyRate} onChange={(e) => setForm({ ...form, overrideHourlyRate: e.target.value })} />
+            <input type="text" inputMode="decimal" value={form.overrideHourlyRate} onChange={(e) => setForm({ ...form, overrideHourlyRate: e.target.value })} />
           </div>
           <label className="row"><input type="checkbox" checked={form.billComplementaryHours} onChange={(e) => setForm({ ...form, billComplementaryHours: e.target.checked })} /> Facturer heures complémentaires</label>
           <label className="row"><input type="checkbox" checked={form.applyPrecariousnessPrime} onChange={(e) => setForm({ ...form, applyPrecariousnessPrime: e.target.checked })} /> Prime de précarité (CDD)</label>
@@ -170,11 +182,11 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           <div className="row">
             <div className="field" style={{ flex: 1 }}>
               <label>Repas / unité</label>
-              <input type="number" step="0.01" value={form.mealFeePerMeal} onChange={(e) => setForm({ ...form, mealFeePerMeal: Number(e.target.value) })} />
+              <input type="text" inputMode="decimal" value={form.mealFeePerMeal} onChange={(e) => setForm({ ...form, mealFeePerMeal: e.target.value })} />
             </div>
             <div className="field" style={{ flex: 1 }}>
               <label>Repas/jour défaut</label>
-              <input type="number" value={form.defaultMealsPerDay} onChange={(e) => setForm({ ...form, defaultMealsPerDay: Number(e.target.value) })} />
+              <input type="text" inputMode="numeric" value={form.defaultMealsPerDay} onChange={(e) => setForm({ ...form, defaultMealsPerDay: e.target.value })} />
             </div>
           </div>
           <label className="row"><input type="checkbox" checked={form.maintenanceFeeEnabled} onChange={(e) => setForm({ ...form, maintenanceFeeEnabled: e.target.checked })} /> Indemnité entretien activée</label>
@@ -195,36 +207,36 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
                     <tr key={`${index}-${tier.minHours}-${tier.maxHours}`}>
                       <td>
                         <input
-                          type="number"
-                          step="0.25"
+                          type="text"
+                          inputMode="decimal"
                           value={tier.minHours}
                           onChange={(e) => {
                             const next = [...form.maintenanceFeeTiers];
-                            next[index] = { ...tier, minHours: Number(e.target.value) };
+                            next[index] = { ...tier, minHours: e.target.value };
                             setForm({ ...form, maintenanceFeeTiers: next });
                           }}
                         />
                       </td>
                       <td>
                         <input
-                          type="number"
-                          step="0.25"
+                          type="text"
+                          inputMode="decimal"
                           value={tier.maxHours}
                           onChange={(e) => {
                             const next = [...form.maintenanceFeeTiers];
-                            next[index] = { ...tier, maxHours: Number(e.target.value) };
+                            next[index] = { ...tier, maxHours: e.target.value };
                             setForm({ ...form, maintenanceFeeTiers: next });
                           }}
                         />
                       </td>
                       <td>
                         <input
-                          type="number"
-                          step="0.01"
+                          type="text"
+                          inputMode="decimal"
                           value={tier.fee}
                           onChange={(e) => {
                             const next = [...form.maintenanceFeeTiers];
-                            next[index] = { ...tier, fee: Number(e.target.value) };
+                            next[index] = { ...tier, fee: e.target.value };
                             setForm({ ...form, maintenanceFeeTiers: next });
                           }}
                         />
@@ -256,7 +268,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
                   ...form,
                   maintenanceFeeTiers: [
                     ...form.maintenanceFeeTiers,
-                    { minHours: 0, maxHours: 24, fee: 0 },
+                    { minHours: "0", maxHours: "24", fee: "0" },
                   ],
                 })
               }
