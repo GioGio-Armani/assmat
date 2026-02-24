@@ -38,6 +38,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [plannedAbsenceDraft, setPlannedAbsenceDraft] = useState<PlannedAbsencePeriod>({ startDate: "", endDate: "" });
   const [form, setForm] = useState({
     childName: initial?.childName ?? "",
     startDate: initial?.startDate ? new Date(initial.startDate).toISOString().slice(0, 10) : "",
@@ -46,7 +47,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     hoursPerDay: toInputValue(initial?.hoursPerDay ?? 8.5),
     daysPerWeek: (initial?.daysPerWeek as 2 | 3 | 4 | 5) ?? 4,
     weeksPerYear: toInputValue(initial?.weeksPerYear ?? 46),
-    plannedAbsencesText: JSON.stringify(initial?.plannedAbsences ?? [], null, 2),
+    plannedAbsences: initial?.plannedAbsences ?? [],
     baseHourlyRate: toInputValue(initial?.baseHourlyRate ?? 0),
     allowOverride: initial?.allowOverride ?? false,
     overrideHourlyRate: toInputValue(initial?.overrideHourlyRate),
@@ -132,7 +133,6 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     setSuccess(null);
     setLoading(true);
     try {
-      const plannedAbsences = JSON.parse(form.plannedAbsencesText) as PlannedAbsencePeriod[];
       const payload = contractInputSchema.parse({
         childName: form.childName,
         startDate: form.startDate,
@@ -141,7 +141,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
         hoursPerDay: parseLocaleNumber(form.hoursPerDay),
         daysPerWeek: Number(form.daysPerWeek),
         weeksPerYear: parseLocaleNumber(form.weeksPerYear),
-        plannedAbsences,
+        plannedAbsences: form.plannedAbsences,
         baseHourlyRate: parseLocaleNumber(form.baseHourlyRate),
         allowOverride: form.allowOverride,
         overrideHourlyRate:
@@ -176,6 +176,32 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function addPlannedAbsence() {
+    if (!plannedAbsenceDraft.startDate || !plannedAbsenceDraft.endDate) {
+      setError("Renseignez une date de début et de fin pour l'absence prévue.");
+      return;
+    }
+    if (plannedAbsenceDraft.endDate < plannedAbsenceDraft.startDate) {
+      setError("La date de fin doit être supérieure ou égale à la date de début.");
+      return;
+    }
+    setError(null);
+    setForm({
+      ...form,
+      plannedAbsences: [...form.plannedAbsences, plannedAbsenceDraft].sort((a, b) =>
+        a.startDate.localeCompare(b.startDate),
+      ),
+    });
+    setPlannedAbsenceDraft({ startDate: "", endDate: "" });
+  }
+
+  function removePlannedAbsence(index: number) {
+    setForm({
+      ...form,
+      plannedAbsences: form.plannedAbsences.filter((_, i) => i !== index),
+    });
   }
 
   return (
@@ -363,9 +389,57 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               Ajouter tranche
             </button>
           </div>
-          <div className="field">
-            <label>Absences prévues (JSON)</label>
-            <textarea rows={8} value={form.plannedAbsencesText} onChange={(e) => setForm({ ...form, plannedAbsencesText: e.target.value })} />
+          <div className="stack">
+            <label className="small muted">Absences prévues (facile à saisir)</label>
+            <div className="row">
+              <div className="field" style={{ flex: 1 }}>
+                <label>Début indisponibilité</label>
+                <input
+                  type="date"
+                  value={plannedAbsenceDraft.startDate}
+                  onChange={(e) => setPlannedAbsenceDraft({ ...plannedAbsenceDraft, startDate: e.target.value })}
+                />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>Fin indisponibilité</label>
+                <input
+                  type="date"
+                  value={plannedAbsenceDraft.endDate}
+                  onChange={(e) => setPlannedAbsenceDraft({ ...plannedAbsenceDraft, endDate: e.target.value })}
+                />
+              </div>
+              <button type="button" className="btn" onClick={addPlannedAbsence}>Ajouter</button>
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {form.plannedAbsences.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="small muted">Aucune absence prévue.</td>
+                    </tr>
+                  ) : (
+                    form.plannedAbsences.map((absence, index) => (
+                      <tr key={`${absence.startDate}-${absence.endDate}-${index}`}>
+                        <td>{absence.startDate}</td>
+                        <td>{absence.endDate}</td>
+                        <td>
+                          <button type="button" className="btn danger" onClick={() => removePlannedAbsence(index)}>
+                            Supprimer
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

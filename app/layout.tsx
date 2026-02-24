@@ -19,6 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="nav">
               <Link href="/">Contrats</Link>
               <Link href="/settings">Réglages</Link>
+              <Link href="/help" aria-label="Aide et mode d'emploi">❓ Aide</Link>
             </nav>
           </header>
           {children}
