@@ -233,7 +233,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
             <label>Enfant</label>
             <input value={form.childName} onChange={(e) => setForm({ ...form, childName: e.target.value })} />
           </div>
-          <div className="row">
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Début</label>
               <input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
@@ -243,7 +243,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               <input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
             </div>
           </div>
-          <div className="row">
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Type</label>
               <select value={form.contractType} onChange={(e) => setForm({ ...form, contractType: e.target.value as "CDI" | "CDD" })}>
@@ -258,7 +258,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               </select>
             </div>
           </div>
-          <div className="row">
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Heures/jour</label>
               <input type="text" inputMode="decimal" value={form.hoursPerDay} onChange={(e) => setForm({ ...form, hoursPerDay: e.target.value })} />
@@ -271,7 +271,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
         </div>
 
         <div className="stack" style={{ display: step === 1 ? "grid" : "none" }}>
-          <div className="row">
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Taux base (0 = auto via grille)</label>
               <input type="text" inputMode="decimal" value={form.baseHourlyRate} onChange={(e) => setForm({ ...form, baseHourlyRate: e.target.value })} />
@@ -311,7 +311,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
 
         <div className="stack" style={{ display: step === 2 ? "grid" : "none" }}>
           <label className="row"><input type="checkbox" checked={form.mealFeeEnabled} onChange={(e) => setForm({ ...form, mealFeeEnabled: e.target.checked })} /> Indemnité repas activée</label>
-          <div className="row">
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Repas / unité</label>
               <input type="text" inputMode="decimal" value={form.mealFeePerMeal} onChange={(e) => setForm({ ...form, mealFeePerMeal: e.target.value })} />
@@ -410,7 +410,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
           </div>
           <div className="stack">
             <label className="small muted">Absences prévues (facile à saisir)</label>
-            <div className="row">
+            <div className="mobile-fields-2">
               <div className="field" style={{ flex: 1 }}>
                 <label>Début indisponibilité</label>
                 <input

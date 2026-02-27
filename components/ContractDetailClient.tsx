@@ -128,7 +128,7 @@ export function ContractDetailClient({ contractId, initialData, initialMonth }: 
             <strong>Saisie pointage</strong>
             <div className="grid cols-2">
               <div className="stack">
-                <div className="row">
+                <div className="mobile-fields-3">
                   <div className="field" style={{ flex: 1 }}>
                     <label>Date</label>
                     <input type="date" value={entryForm.date} onChange={(e) => setEntryForm({ ...entryForm, date: e.target.value })} />
