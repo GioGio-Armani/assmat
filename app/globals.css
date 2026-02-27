@@ -79,6 +79,26 @@ button, input, select, textarea { font: inherit; }
 .field input, .field select, .field textarea {
   width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 9px 10px; background: white;
 }
+.field input,
+.field select,
+.field textarea,
+table input,
+table select {
+  min-width: 0;
+}
+
+.mobile-fields-2,
+.mobile-fields-3 {
+  display: grid;
+  gap: 8px;
+}
+
+.mobile-fields-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.mobile-fields-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.row .field {
+  flex: 1 1 180px;
+}
 .btn {
   border: 1px solid var(--line); background: white; border-radius: 12px; padding: 8px 12px; cursor: pointer;
 }
@@ -136,4 +156,11 @@ thead th { background: #faf5ea; position: sticky; top: 0; z-index: 1; }
   .app-bottom-nav { position: static; margin: 0 14px 14px; border: 1px solid var(--line); border-radius: 16px; }
   .grid.cols-2 { grid-template-columns: 1.1fr 1fr; }
   .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 767px) {
+  .mobile-fields-2,
+  .mobile-fields-3 {
+    grid-template-columns: 1fr;
+  }
 }
