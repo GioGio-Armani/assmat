@@ -13,7 +13,7 @@ test("création contrat, pointages, récap mensuel et PDF", async ({ page }) => 
   await childField.fill(childName);
   await page.getByLabel("Début").fill(`${month}-01`);
   await page.getByLabel("Heures/jour").fill("8");
-  await page.getByLabel("Jours/semaine").selectOption("4");
+  await page.getByLabel("Jours/semaine").fill("4");
   await page.getByLabel("Semaines/an").fill("46");
   await page.getByLabel("Taux base (0 = auto via grille)").fill("4");
   await page.getByRole("button", { name: "Créer le contrat" }).click();

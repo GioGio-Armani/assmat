@@ -12,6 +12,7 @@ export default function HelpPage() {
         <ul>
           <li><strong>Enfant</strong>, <strong>date de début</strong> et <strong>type</strong> (CDI ou CDD) sont indispensables.</li>
           <li><strong>Heures/jour</strong>, <strong>jours/semaine</strong> et <strong>semaines/an</strong> définissent la base mensualisée.</li>
+          <li><strong>Heures totales prévues (optionnel)</strong> : si renseignées, elles sont réparties automatiquement sur le nombre de mois compris entre le début et la fin du contrat.</li>
           <li><strong>Taux de base</strong> : mettez 0 pour utiliser la grille auto, ou un montant pour forcer un taux.</li>
           <li><strong>Absences prévues</strong> : utilisez les champs de dates puis ajoutez-les au tableau (plus besoin de JSON).</li>
         </ul>
@@ -23,7 +24,7 @@ export default function HelpPage() {
           <li><strong>Heures complémentaires</strong> : activables/désactivables selon votre mode de facturation.</li>
           <li><strong>Majoration</strong> : le pourcentage s&apos;applique aux heures dépassant le seuil hebdomadaire.</li>
           <li><strong>Repas et entretien</strong> : chaque indemnité est indépendante et peut être activée séparément.</li>
-          <li><strong>Prime de précarité</strong> : à activer pour les CDD si nécessaire.</li>
+          <li><strong>CDD</strong> : les congés payés à 10% sont ajoutés mensuellement, et la prime de précarité reste activable séparément.</li>
         </ul>
       </section>
 

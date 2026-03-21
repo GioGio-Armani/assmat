@@ -60,6 +60,7 @@ export function MonthlySummaryPdf({
             </View>
             <View style={styles.headerCol}>
               <KV label="Jours/semaine" value={String(c.daysPerWeek)} />
+              <KV label="Heures totales prévues" value={c.totalPlannedHours != null ? String(c.totalPlannedHours) : "-"} />
               <KV label="Heures/jour" value={`${c.hoursPerDay}`} />
               <KV label="Semaines/an" value={String(c.weeksPerYear)} />
               <KV label="Taux horaire effectif" value={`${Number(c.effectiveHourlyRate).toFixed(2)} EUR/h`} />
@@ -74,8 +75,9 @@ export function MonthlySummaryPdf({
           <KV label="Heures complémentaires" value={`${rounded.complementaryHoursMonth.toFixed(2)} h`} />
           <KV label={`Heures majorées (>45h) (${c.overtimeRatePercent}%)`} value={`${rounded.overtimeHoursMonth.toFixed(2)} h`} />
           <KV label="Brut base" value={formatCurrency(rounded.brutBase)} />
-          <KV label="Prime de précarité (CDD)" value={formatCurrency(rounded.primeMensuelle)} />
+          <KV label="Congés payés CDD" value={formatCurrency(rounded.congesPayesMensuels)} />
           <KV label="Total brut" value={formatCurrency(rounded.totalBrut)} />
+          <KV label="Prime de précarité (CDD)" value={formatCurrency(rounded.primeMensuelle)} />
           <KV label="Net (coef 0.7812)" value={formatCurrency(rounded.net)} />
           <KV label="Indemnités repas" value={formatCurrency(rounded.mealIndemnity)} />
           <KV label="Indemnités entretien" value={formatCurrency(rounded.maintenanceIndemnity)} />

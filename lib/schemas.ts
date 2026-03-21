@@ -19,7 +19,8 @@ export const contractInputSchema = z.object({
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
   contractType: z.enum(["CDI", "CDD"]),
   hoursPerDay: z.number().positive(),
-  daysPerWeek: z.union([z.literal(2), z.literal(3), z.literal(4), z.literal(5)]),
+  daysPerWeek: z.number().positive().max(7),
+  totalPlannedHours: z.number().positive().nullable(),
   weeksPerYear: z.number().int().min(1).max(53),
   plannedAbsences: z.array(plannedAbsenceSchema),
   baseHourlyRate: z.number().min(0),
@@ -33,6 +34,14 @@ export const contractInputSchema = z.object({
   maintenanceFeeEnabled: z.boolean(),
   maintenanceFeeTiers: z.array(maintenanceFeeTierSchema),
   applyPrecariousnessPrime: z.boolean(),
+}).superRefine((value, ctx) => {
+  if (value.totalPlannedHours !== null && value.endDate === null) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["endDate"],
+      message: "La fin du contrat est obligatoire si vous renseignez le total d'heures prévues.",
+    });
+  }
 });
 
 export const timeEntryInputSchema = z

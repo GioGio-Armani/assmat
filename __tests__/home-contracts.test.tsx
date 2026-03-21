@@ -23,6 +23,7 @@ describe("HomeContracts", () => {
             hoursPerDay: 8.5,
             daysPerWeek: 4,
             weeksPerYear: 46,
+            totalPlannedHours: null,
             plannedAbsences: [],
             baseHourlyRate: 4.2,
             allowOverride: false,

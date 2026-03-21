@@ -16,7 +16,10 @@ export const WEEKLY_OVERTIME_THRESHOLD = 45;
 
 export type CalcContractInput = {
   hoursPerDay: number;
-  daysPerWeek: 2 | 3 | 4 | 5;
+  daysPerWeek: number;
+  totalPlannedHours?: number | null;
+  startDate?: string | Date;
+  endDate?: string | Date | null;
   weeksPerYear: number;
   plannedAbsences: PlannedAbsencePeriod[];
   effectiveHourlyRate: number;
@@ -96,14 +99,38 @@ function isContractualWeekday(date: Date, daysPerWeek: number) {
   return isoDay <= daysPerWeek;
 }
 
+function getContractMonthCount(startDate?: string | Date, endDate?: string | Date | null) {
+  if (!startDate || !endDate) return null;
+  const start = typeof startDate === "string" ? parseISO(startDate) : startDate;
+  const end = typeof endDate === "string" ? parseISO(endDate) : endDate;
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return null;
+  return (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth()) + 1;
+}
+
 export function computeMonthlyExpectedHours(input: {
   year: number;
   month: number;
   hoursPerDay: number;
-  daysPerWeek: 2 | 3 | 4 | 5;
+  daysPerWeek: number;
+  totalPlannedHours?: number | null;
+  startDate?: string | Date;
+  endDate?: string | Date | null;
   weeksPerYear: number;
   plannedAbsences: PlannedAbsencePeriod[];
 }) {
+  const contractMonthCount = getContractMonthCount(input.startDate, input.endDate);
+  if (input.totalPlannedHours && input.totalPlannedHours > 0 && contractMonthCount) {
+    return {
+      weeklyHours: null,
+      contractMonthCount,
+      annualContractHours: input.totalPlannedHours,
+      annualAfterPlannedAbsences: input.totalPlannedHours,
+      monthlyExpectedHoursSmoothed: input.totalPlannedHours / contractMonthCount,
+      cancelledDaysTotal: 0,
+      cancelledDaysInMonth: 0,
+    };
+  }
+
   const weeklyHours = input.hoursPerDay * input.daysPerWeek;
   const annualContractHours = weeklyHours * input.weeksPerYear;
 
@@ -135,6 +162,7 @@ export function computeMonthlyExpectedHours(input: {
 
   return {
     weeklyHours,
+    contractMonthCount,
     annualContractHours,
     annualAfterPlannedAbsences,
     monthlyExpectedHoursSmoothed,
@@ -162,18 +190,23 @@ export function computeGrossNetTotals(input: {
     input.overtimeHoursMonth *
     input.effectiveHourlyRate *
     (input.overtimeRatePercent / 100);
+  const congesPayesMensuels =
+    input.contractType === "CDD"
+      ? 0.1 * (brutBase + brutComplementary + brutOvertime)
+      : 0;
   const primeAnnuelle =
     input.contractType === "CDD" && input.applyPrecariousnessPrime
       ? 0.1 * (input.annualAfterPlannedAbsences * input.effectiveHourlyRate)
       : 0;
   const primeMensuelle = primeAnnuelle / 12;
-  const totalBrut = brutBase + brutComplementary + brutOvertime + primeMensuelle;
+  const totalBrut = brutBase + brutComplementary + brutOvertime + congesPayesMensuels + primeMensuelle;
   const net = totalBrut * NET_COEFFICIENT;
 
   return {
     brutBase,
     brutComplementary,
     brutOvertime,
+    congesPayesMensuels,
     primeAnnuelle,
     primeMensuelle,
     totalBrut,
@@ -256,6 +289,9 @@ export function computeMonthlySummary(input: {
     month: input.month,
     hoursPerDay: input.contract.hoursPerDay,
     daysPerWeek: input.contract.daysPerWeek,
+    totalPlannedHours: input.contract.totalPlannedHours,
+    startDate: input.contract.startDate,
+    endDate: input.contract.endDate,
     weeksPerYear: input.contract.weeksPerYear,
     plannedAbsences: input.contract.plannedAbsences,
   });
