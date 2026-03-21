@@ -27,7 +27,10 @@ export async function getContractWithEntriesForMonth(contractId: string, year: n
 function mapContractForCalc(contract: AppContract) {
   return {
     hoursPerDay: contract.hoursPerDay,
-    daysPerWeek: contract.daysPerWeek as 2 | 3 | 4 | 5,
+    daysPerWeek: contract.daysPerWeek,
+    totalPlannedHours: contract.totalPlannedHours,
+    startDate: contract.startDate,
+    endDate: contract.endDate,
     weeksPerYear: contract.weeksPerYear,
     plannedAbsences: contract.plannedAbsences,
     effectiveHourlyRate:
@@ -90,6 +93,7 @@ export function buildMonthlySummary(contractRow: Contract, entryRows: TimeEntry[
         brutBase: round2(summary.gross.brutBase),
         brutComplementary: round2(summary.gross.brutComplementary),
         brutOvertime: round2(summary.gross.brutOvertime),
+        congesPayesMensuels: round2(summary.gross.congesPayesMensuels),
         primeMensuelle: round2(summary.gross.primeMensuelle),
         totalBrut: round2(summary.gross.totalBrut),
         net: round2(summary.gross.net),

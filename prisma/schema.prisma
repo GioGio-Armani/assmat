@@ -19,7 +19,8 @@ model Contract {
   endDate                  DateTime?
   contractType             ContractType
   hoursPerDay              Float
-  daysPerWeek              Int
+  daysPerWeek              Float
+  totalPlannedHours        Float?
   weeksPerYear             Int
   plannedAbsences          Json
   baseHourlyRate           Float

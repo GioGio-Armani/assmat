@@ -100,7 +100,7 @@ export function ContractDetailClient({ contractId, initialData, initialMonth }: 
           <div>
             <h1 style={{ margin: 0 }}>{data.contract.childName}</h1>
             <div className="muted small">
-              {data.contract.contractType} • {data.contract.daysPerWeek} j/sem • {data.contract.hoursPerDay} h/j • {" "}
+              {data.contract.contractType} • {data.contract.daysPerWeek} j/sem • {data.contract.totalPlannedHours ? `${data.contract.totalPlannedHours} h contrat • ` : ""}{data.contract.hoursPerDay} h/j • {" "}
               {data.contract.weeksPerYear} sem/an
             </div>
           </div>
@@ -216,6 +216,8 @@ export function ContractDetailClient({ contractId, initialData, initialMonth }: 
                 </div>
                 <div className="card">
                   <div className="summary-row"><span>Total brut</span><strong>{formatCurrency(rounded.totalBrut)}</strong></div>
+                  <div className="summary-row"><span>Congés payés CDD</span><strong>{formatCurrency(rounded.congesPayesMensuels)}</strong></div>
+                  <div className="summary-row"><span>Prime de précarité</span><strong>{formatCurrency(rounded.primeMensuelle)}</strong></div>
                   <div className="summary-row"><span>Net</span><strong>{formatCurrency(rounded.net)}</strong></div>
                   <div className="summary-row"><span>Repas</span><strong>{formatCurrency(rounded.mealIndemnity)}</strong></div>
                   <div className="summary-row"><span>Entretien</span><strong>{formatCurrency(rounded.maintenanceIndemnity)}</strong></div>
@@ -230,6 +232,7 @@ export function ContractDetailClient({ contractId, initialData, initialMonth }: 
           <strong>Informations contrat</strong>
           <div className="summary-row"><span>Type</span><strong>{data.contract.contractType}</strong></div>
           <div className="summary-row"><span>Rythme hebdo</span><strong>{data.contract.daysPerWeek} j / {data.contract.hoursPerDay} h</strong></div>
+          <div className="summary-row"><span>Heures totales prévues</span><strong>{data.contract.totalPlannedHours ?? "-"}</strong></div>
           <div className="summary-row"><span>Semaines / an</span><strong>{data.contract.weeksPerYear}</strong></div>
           <div className="summary-row"><span>Taux appliqué</span><strong>{effectiveRate.toFixed(2)} €/h</strong></div>
           <div className="summary-row"><span>Complémentaires détectées</span><strong>{complementaryDays.length}</strong></div>
