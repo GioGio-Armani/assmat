@@ -68,6 +68,24 @@ describe("calc module", () => {
     expect(result.annualAfterPlannedAbsences).toBe(1800);
   });
 
+
+  it("computeMonthlyExpectedHours accepte un volume hebdomadaire direct", () => {
+    const result = computeMonthlyExpectedHours({
+      year: 2026,
+      month: 1,
+      hoursPerDay: 8,
+      daysPerWeek: 4.5,
+      totalPlannedHours: 185,
+      startDate: "2026-01-01",
+      endDate: "2026-05-31",
+      weeksPerYear: 46,
+      plannedAbsences: [],
+    });
+    expect(result.weeklyHours).toBeNull();
+    expect(result.contractMonthCount).toBe(5);
+    expect(result.monthlyExpectedHoursSmoothed).toBe(37);
+  });
+
   it("computeGrossNetTotals inclut prime CDD", () => {
     const result = computeGrossNetTotals({
       monthlyExpectedHours: 100,
@@ -81,9 +99,10 @@ describe("calc module", () => {
       applyPrecariousnessPrime: true,
     });
     expect(result.brutBase).toBe(400);
+    expect(result.congesPayesMensuels).toBe(42.2);
     expect(result.primeAnnuelle).toBe(480);
     expect(result.primeMensuelle).toBe(40);
-    expect(result.totalBrut).toBe(462);
+    expect(result.totalBrut).toBe(504.2);
   });
 
   it("computeIndemnities", () => {

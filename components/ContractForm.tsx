@@ -47,7 +47,8 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     endDate: initial?.endDate ? new Date(initial.endDate).toISOString().slice(0, 10) : "",
     contractType: (initial?.contractType as "CDI" | "CDD") ?? "CDI",
     hoursPerDay: toInputValue(initial?.hoursPerDay ?? 8.5),
-    daysPerWeek: (initial?.daysPerWeek as 2 | 3 | 4 | 5) ?? 4,
+    daysPerWeek: toInputValue(initial?.daysPerWeek ?? 4),
+    totalPlannedHours: toInputValue(initial?.totalPlannedHours),
     weeksPerYear: toInputValue(initial?.weeksPerYear ?? 46),
     plannedAbsences: initial?.plannedAbsences ?? [],
     baseHourlyRate: toInputValue(initial?.baseHourlyRate ?? 0),
@@ -70,15 +71,19 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
 
   const monthlyPreview = useMemo(() => {
     const hoursPerDay = parseLocaleNumberOrNull(form.hoursPerDay);
+    const daysPerWeek = parseLocaleNumberOrNull(form.daysPerWeek);
+    const totalPlannedHours = parseLocaleNumberOrNull(form.totalPlannedHours);
     const weeksPerYear = parseLocaleNumberOrNull(form.weeksPerYear);
     const baseHourlyRate = parseLocaleNumberOrNull(form.baseHourlyRate);
     const overrideHourlyRate = parseLocaleNumberOrNull(form.overrideHourlyRate);
 
     if (
       hoursPerDay === null ||
+      daysPerWeek === null ||
       weeksPerYear === null ||
       baseHourlyRate === null ||
       hoursPerDay <= 0 ||
+      daysPerWeek <= 0 ||
       weeksPerYear <= 0
     ) {
       return null;
@@ -87,9 +92,17 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     const effectiveHourlyRate = form.allowOverride && overrideHourlyRate !== null
       ? overrideHourlyRate
       : baseHourlyRate;
-    const monthlyHours = (hoursPerDay * form.daysPerWeek * weeksPerYear) / 12;
+    const hasContractDuration = form.startDate && form.endDate;
+    const contractMonthCount = hasContractDuration
+      ? (new Date(form.endDate).getFullYear() - new Date(form.startDate).getFullYear()) * 12
+        + (new Date(form.endDate).getMonth() - new Date(form.startDate).getMonth()) + 1
+      : null;
+    const resolvedMonthlyHours = totalPlannedHours !== null && totalPlannedHours > 0 && contractMonthCount
+      ? totalPlannedHours / contractMonthCount
+      : (hoursPerDay * daysPerWeek * weeksPerYear) / 12;
+    const monthlyHours = resolvedMonthlyHours;
     const monthlyBaseSalary = monthlyHours * effectiveHourlyRate;
-    const monthlyContractDays = (form.daysPerWeek * weeksPerYear) / 12;
+    const monthlyContractDays = (daysPerWeek * weeksPerYear) / 12;
 
     let maintenanceDailyFee = 0;
     let monthlyMaintenanceFee = 0;
@@ -111,6 +124,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     }
 
     return {
+      contractMonthCount,
       monthlyHours,
       monthlyContractDays,
       effectiveHourlyRate,
@@ -123,7 +137,10 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
     form.allowOverride,
     form.baseHourlyRate,
     form.daysPerWeek,
+    form.endDate,
     form.hoursPerDay,
+    form.startDate,
+    form.totalPlannedHours,
     form.maintenanceFeeEnabled,
     form.maintenanceFeeTiers,
     form.overrideHourlyRate,
@@ -141,7 +158,8 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
         endDate: form.endDate || null,
         contractType: form.contractType,
         hoursPerDay: parseLocaleNumber(form.hoursPerDay),
-        daysPerWeek: Number(form.daysPerWeek),
+        daysPerWeek: parseLocaleNumber(form.daysPerWeek),
+        totalPlannedHours: form.totalPlannedHours === "" ? null : parseLocaleNumber(form.totalPlannedHours),
         weeksPerYear: parseLocaleNumber(form.weeksPerYear),
         plannedAbsences: form.plannedAbsences,
         baseHourlyRate: parseLocaleNumber(form.baseHourlyRate),
@@ -253,9 +271,7 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
             </div>
             <div className="field" style={{ flex: 1 }}>
               <label>Jours/semaine</label>
-              <select value={form.daysPerWeek} onChange={(e) => setForm({ ...form, daysPerWeek: Number(e.target.value) as 2 | 3 | 4 | 5 })}>
-                {[2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-              </select>
+              <input type="text" inputMode="decimal" value={form.daysPerWeek} onChange={(e) => setForm({ ...form, daysPerWeek: e.target.value })} />
             </div>
           </div>
           <div className="mobile-fields-2">
@@ -263,6 +279,13 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               <label>Heures/jour</label>
               <input type="text" inputMode="decimal" value={form.hoursPerDay} onChange={(e) => setForm({ ...form, hoursPerDay: e.target.value })} />
             </div>
+            <div className="field" style={{ flex: 1 }}>
+              <label>Heures totales prévues (optionnel)</label>
+              <input type="text" inputMode="decimal" value={form.totalPlannedHours} onChange={(e) => setForm({ ...form, totalPlannedHours: e.target.value })} />
+              <div className="small muted">Si renseigné, ce total sera réparti automatiquement sur les mois compris entre le début et la fin du contrat.</div>
+            </div>
+          </div>
+          <div className="mobile-fields-2">
             <div className="field" style={{ flex: 1 }}>
               <label>Semaines/an</label>
               <input type="text" inputMode="numeric" value={form.weeksPerYear} onChange={(e) => setForm({ ...form, weeksPerYear: e.target.value })} />
@@ -296,6 +319,8 @@ export function ContractForm({ mode, initial, onSaved, contractId }: Props) {
               <>
                 <div className="small muted">Hypothèse : présence chaque jour prévu au contrat.</div>
                 <div className="small">Heures mensuelles estimées : <strong>{formatHours(monthlyPreview.monthlyHours)}</strong></div>
+                {form.totalPlannedHours ? <div className="small">Heures totales prévues : <strong>{formatHours(parseLocaleNumber(form.totalPlannedHours))}</strong></div> : null}
+                {monthlyPreview.contractMonthCount ? <div className="small">Durée retenue : <strong>{monthlyPreview.contractMonthCount} mois</strong></div> : null}
                 <div className="small">Jours mensuels estimés : <strong>{monthlyPreview.monthlyContractDays.toFixed(2).replace(".", ",")} j</strong></div>
                 <div className="small">Taux horaire appliqué : <strong>{formatCurrency(monthlyPreview.effectiveHourlyRate)}</strong></div>
                 <div className="small">Salaire mensuel (hors indemnités) : <strong>{formatCurrency(monthlyPreview.monthlyBaseSalary)}</strong></div>

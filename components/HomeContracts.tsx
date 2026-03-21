@@ -39,7 +39,7 @@ export function HomeContracts({ initialContracts }: { initialContracts: AppContr
               <span className="pill">{c.contractType}</span>
             </div>
             <div className="muted small">
-              {c.daysPerWeek} j/sem • {c.hoursPerDay} h/j • {c.weeksPerYear} sem/an
+              {c.daysPerWeek} j/sem • {c.totalPlannedHours ? `${c.totalPlannedHours} h contrat • ` : ""}{c.hoursPerDay} h/j • {c.weeksPerYear} sem/an
             </div>
             <div className="small">
               Taux effectif:{" "}

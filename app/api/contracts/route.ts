@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     const baseHourlyRate =
       payload.baseHourlyRate > 0
         ? payload.baseHourlyRate
-        : await resolveBaseHourlyRate(payload.daysPerWeek, payload.hoursPerDay);
+        : await resolveBaseHourlyRate(Math.round(payload.daysPerWeek), payload.hoursPerDay);
 
     const contract = await prisma.contract.create({
       data: {

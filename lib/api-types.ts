@@ -27,6 +27,7 @@ export type ContractSummaryApiResponse = {
     endDate: string | Date | null;
     contractType: "CDI" | "CDD";
     daysPerWeek: number;
+    totalPlannedHours?: number | null;
     hoursPerDay: number;
     weeksPerYear: number;
     overtimeRatePercent: number;
@@ -48,6 +49,7 @@ export type ContractSummaryApiResponse = {
       brutBase: number;
       brutComplementary: number;
       brutOvertime: number;
+      congesPayesMensuels: number;
       primeMensuelle: number;
       totalBrut: number;
       net: number;
